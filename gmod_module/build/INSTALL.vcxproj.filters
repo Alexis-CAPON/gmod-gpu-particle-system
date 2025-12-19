@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Dev\gpu-particle-system\gmod_module\build\CMakeFiles\234bf967ca67821e0d75365c1e9f08d0\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{BD8403D4-1BD8-36C7-88E7-74A74FFB66CB}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

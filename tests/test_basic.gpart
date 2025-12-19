@@ -1,0 +1,138 @@
+{
+  "metadata": {
+    "name": "TestBasicParticle",
+    "version": "1.0",
+    "exportDate": "2025-11-26",
+    "exporter": "Manual"
+  },
+  "system": {
+    "duration": 5.0,
+    "looping": true,
+    "prewarm": false,
+    "startDelay": {
+      "mode": "Constant",
+      "constant": 0.0
+    },
+    "startLifetime": {
+      "mode": "Constant",
+      "constant": 2.0
+    },
+    "startSpeed": {
+      "mode": "Constant",
+      "constant": 5.0
+    },
+    "startSize": {
+      "mode": "Constant",
+      "constant": 0.5
+    },
+    "startRotation": {
+      "mode": "Constant",
+      "constant": 0.0
+    },
+    "startColor": {
+      "r": 1.0,
+      "g": 0.8,
+      "b": 0.2,
+      "a": 1.0
+    },
+    "gravityModifier": {
+      "mode": "Constant",
+      "constant": 0.0
+    },
+    "simulationSpace": "World",
+    "simulationSpeed": 1.0,
+    "playOnAwake": true,
+    "maxParticles": 1000
+  },
+  "emission": {
+    "enabled": true,
+    "rateOverTime": {
+      "mode": "Constant",
+      "constant": 100.0
+    },
+    "bursts": []
+  },
+  "shape": {
+    "enabled": true,
+    "shapeType": "Cone",
+    "angle": 25.0,
+    "radius": 1.0,
+    "radiusThickness": 1.0,
+    "arc": 360.0,
+    "position": { "x": 0, "y": 0, "z": 0 },
+    "rotation": { "x": 0, "y": 0, "z": 0 },
+    "scale": { "x": 1, "y": 1, "z": 1 },
+    "alignToDirection": false,
+    "randomDirectionAmount": 0.0,
+    "sphericalDirectionAmount": 0.0
+  },
+  "velocityOverLifetime": {
+    "enabled": false
+  },
+  "limitVelocityOverLifetime": {
+    "enabled": false
+  },
+  "forceOverLifetime": {
+    "enabled": false
+  },
+  "colorOverLifetime": {
+    "enabled": true,
+    "gradient": {
+      "colorKeys": [
+        { "color": { "r": 1.0, "g": 0.8, "b": 0.2, "a": 1.0 }, "time": 0.0 },
+        { "color": { "r": 1.0, "g": 0.2, "b": 0.0, "a": 1.0 }, "time": 1.0 }
+      ],
+      "alphaKeys": [
+        { "alpha": 1.0, "time": 0.0 },
+        { "alpha": 0.0, "time": 1.0 }
+      ]
+    }
+  },
+  "sizeOverLifetime": {
+    "enabled": true,
+    "size": {
+      "mode": "Curve",
+      "curve": {
+        "keys": [
+          { "time": 0.0, "value": 1.0, "inTangent": 0, "outTangent": 0 },
+          { "time": 0.5, "value": 1.5, "inTangent": 1, "outTangent": 1 },
+          { "time": 1.0, "value": 0.0, "inTangent": -2, "outTangent": 0 }
+        ]
+      },
+      "multiplier": 1.0
+    }
+  },
+  "rotationOverLifetime": {
+    "enabled": true,
+    "separateAxes": false,
+    "z": {
+      "mode": "Constant",
+      "constant": 90.0
+    }
+  },
+  "noise": {
+    "enabled": false
+  },
+  "collision": {
+    "enabled": false
+  },
+  "textureSheetAnimation": {
+    "enabled": false,
+    "numTilesX": 1,
+    "numTilesY": 1
+  },
+  "renderer": {
+    "renderMode": "Billboard",
+    "sortMode": "Distance",
+    "minParticleSize": 0.0,
+    "maxParticleSize": 0.5,
+    "material": "particles/default",
+    "texture": "materials/particles/glow.png",
+    "pivot": { "x": 0, "y": 0, "z": 0 },
+    "flip": false,
+    "lengthScale": 2.0,
+    "normalDirection": 1.0,
+    "sortingOrder": 0
+  },
+  "subEmitters": []
+}

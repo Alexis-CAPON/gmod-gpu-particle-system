@@ -1,0 +1,2 @@
+C:/Dev/gpu-particle-system/gmod_module/../gmod_addon/starwars_particles/lua/bin/gmcl_particles_win32.dll
+C:/Dev/gpu-particle-system/gmod_module/../gmod_addon/starwars_particles/lua/bin/gmsv_particles_win32.dll

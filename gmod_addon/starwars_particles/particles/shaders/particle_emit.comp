@@ -1,0 +1,257 @@
+#version 430 core
+
+// ============================================================================
+// Particle Emission Compute Shader
+// Spawns new particles based on emission settings
+// ============================================================================
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+// ============================================================================
+// Particle Structure
+// ============================================================================
+
+struct Particle {
+    vec3 position;
+    vec3 velocity;
+    vec3 startPosition;
+    float lifetime;
+    float age;
+    float size;
+    float startSize;
+    vec3 rotation;
+    float rotationSpeed;
+    vec4 color;
+    vec4 startColor;
+    float randomSeed;
+    int alive;
+    int _padding[3];
+};
+
+// ============================================================================
+// Shader Storage Buffers
+// ============================================================================
+
+layout(std430, binding = 0) buffer ParticleBuffer {
+    Particle particles[];
+};
+
+layout(std430, binding = 1) buffer DeadIndexBuffer {
+    uint deadIndices[];
+};
+
+layout(std430, binding = 2) buffer DeadCountBuffer {
+    uint deadCount;
+    uint _padding[3];
+};
+
+layout(std430, binding = 3) buffer EmissionRequestBuffer {
+    uint particlesToEmit;
+    uint _padding2[3];
+};
+
+// ============================================================================
+// Uniforms - Emission Settings
+// ============================================================================
+
+uniform vec3 uEmitterPosition;
+uniform vec3 uEmitterRotation;
+
+// Shape settings
+uniform int uShapeType;  // 0=Cone, 1=Sphere, 2=Box, 3=Circle
+uniform float uShapeAngle;
+uniform float uShapeRadius;
+uniform float uShapeRadiusThickness;
+uniform float uShapeArc;
+uniform vec3 uShapeBoxSize;
+
+// Particle initial properties
+uniform float uStartLifetimeMin;
+uniform float uStartLifetimeMax;
+uniform float uStartSpeedMin;
+uniform float uStartSpeedMax;
+uniform float uStartSizeMin;
+uniform float uStartSizeMax;
+uniform float uStartRotationMin;
+uniform float uStartRotationMax;
+uniform vec4 uStartColor;
+
+// Random seed
+uniform float uTime;
+uniform uint uRandomSeed;
+
+// ============================================================================
+// Random Number Generation
+// ============================================================================
+
+// PCG random number generator
+uint pcg_hash(uint seed) {
+    uint state = seed * 747796405u + 2891336453u;
+    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    return (word >> 22u) ^ word;
+}
+
+float randomFloat(inout uint seed) {
+    seed = pcg_hash(seed);
+    return float(seed) / 4294967296.0;
+}
+
+vec3 randomVec3(inout uint seed) {
+    return vec3(randomFloat(seed), randomFloat(seed), randomFloat(seed));
+}
+
+vec3 randomInUnitSphere(inout uint seed) {
+    vec3 p;
+    do {
+        p = randomVec3(seed) * 2.0 - 1.0;
+    } while (dot(p, p) >= 1.0);
+    return p;
+}
+
+vec3 randomOnUnitSphere(inout uint seed) {
+    return normalize(randomInUnitSphere(seed));
+}
+
+// ============================================================================
+// Shape Emission Functions
+// ============================================================================
+
+vec3 emitFromCone(inout uint seed, out vec3 velocity) {
+    // Random point on circle base
+    float angle = randomFloat(seed) * 2.0 * 3.14159265;
+    float radius = sqrt(randomFloat(seed)) * uShapeRadius * uShapeRadiusThickness;
+
+    vec3 pos = vec3(cos(angle) * radius, sin(angle) * radius, 0);
+
+    // Direction with cone angle
+    float coneAngleRad = radians(uShapeAngle);
+    float spreadAngle = randomFloat(seed) * coneAngleRad;
+    float spreadRotation = randomFloat(seed) * 2.0 * 3.14159265;
+
+    vec3 dir = vec3(
+        sin(spreadAngle) * cos(spreadRotation),
+        sin(spreadAngle) * sin(spreadRotation),
+        cos(spreadAngle)
+    );
+
+    velocity = normalize(dir);
+    return pos;
+}
+
+vec3 emitFromSphere(inout uint seed, out vec3 velocity) {
+    // Random point on/in sphere
+    vec3 dir = randomOnUnitSphere(seed);
+    float radiusFactor = mix(uShapeRadiusThickness, 1.0, randomFloat(seed));
+    vec3 pos = dir * uShapeRadius * radiusFactor;
+
+    // Velocity pointing outward
+    velocity = normalize(pos);
+    return pos;
+}
+
+vec3 emitFromBox(inout uint seed, out vec3 velocity) {
+    // Random point in box
+    vec3 pos = (randomVec3(seed) - 0.5) * uShapeBoxSize;
+
+    // Random direction
+    velocity = normalize(randomInUnitSphere(seed));
+    return pos;
+}
+
+vec3 emitFromCircle(inout uint seed, out vec3 velocity) {
+    // Random point on circle
+    float angle = randomFloat(seed) * radians(uShapeArc);
+    float radius = sqrt(randomFloat(seed)) * uShapeRadius * uShapeRadiusThickness;
+
+    vec3 pos = vec3(cos(angle) * radius, sin(angle) * radius, 0);
+
+    // Velocity pointing up (Z-axis)
+    velocity = vec3(0, 0, 1);
+    return pos;
+}
+
+// ============================================================================
+// Main Emission Shader
+// ============================================================================
+
+void main() {
+    uint id = gl_GlobalInvocationID.x;
+
+    // Check if we need to emit more particles
+    if (id >= particlesToEmit) return;
+
+    // Check if we have dead particles to reuse
+    if (id >= deadCount) return;
+
+    // Get a dead particle index
+    uint particleIndex = deadIndices[id];
+
+    // Bounds check
+    if (particleIndex >= particles.length()) return;
+
+    // Initialize random seed
+    uint seed = uRandomSeed + particleIndex + uint(uTime * 1000.0);
+
+    // ========================================================================
+    // Emit particle based on shape
+    // ========================================================================
+
+    vec3 position;
+    vec3 direction;
+
+    if (uShapeType == 0) {
+        // Cone
+        position = emitFromCone(seed, direction);
+    } else if (uShapeType == 1) {
+        // Sphere
+        position = emitFromSphere(seed, direction);
+    } else if (uShapeType == 2) {
+        // Box
+        position = emitFromBox(seed, direction);
+    } else if (uShapeType == 3) {
+        // Circle
+        position = emitFromCircle(seed, direction);
+    } else {
+        // Default: point emitter
+        position = vec3(0.0);
+        direction = normalize(randomInUnitSphere(seed));
+    }
+
+    // Apply emitter transform
+    position += uEmitterPosition;
+
+    // ========================================================================
+    // Initialize particle properties
+    // ========================================================================
+
+    particles[particleIndex].position = position;
+    particles[particleIndex].startPosition = position;
+
+    // Random start speed
+    float speed = mix(uStartSpeedMin, uStartSpeedMax, randomFloat(seed));
+    particles[particleIndex].velocity = direction * speed;
+
+    // Random lifetime
+    particles[particleIndex].lifetime = mix(uStartLifetimeMin, uStartLifetimeMax, randomFloat(seed));
+    particles[particleIndex].age = 0.0;
+
+    // Random size
+    float startSize = mix(uStartSizeMin, uStartSizeMax, randomFloat(seed));
+    particles[particleIndex].size = startSize;
+    particles[particleIndex].startSize = startSize;
+
+    // Random rotation
+    float rotation = mix(uStartRotationMin, uStartRotationMax, randomFloat(seed));
+    particles[particleIndex].rotation = vec3(0, 0, rotation);
+    particles[particleIndex].rotationSpeed = randomFloat(seed) * 2.0 - 1.0;  // -1 to 1
+
+    // Color
+    particles[particleIndex].color = uStartColor;
+    particles[particleIndex].startColor = uStartColor;
+
+    // Random seed for future use
+    particles[particleIndex].randomSeed = randomFloat(seed);
+
+    // Mark as alive
+    particles[particleIndex].alive = 1;
+}

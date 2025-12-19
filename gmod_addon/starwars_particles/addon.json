@@ -1,0 +1,19 @@
+{
+    "title": "Star Wars GPU Particle System",
+    "type": "effects",
+    "tags": [
+        "effects",
+        "roleplay",
+        "scenic",
+        "realism"
+    ],
+    "ignore": [
+        "*.psd",
+        "*.blend",
+        "*.fbx",
+        "*.obj",
+        ".git/*",
+        ".gitignore",
+        "README.md"
+    ]
+}

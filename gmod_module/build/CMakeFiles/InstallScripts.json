@@ -1,0 +1,8 @@
+{
+	"InstallScripts" : 
+	[
+		"C:/Dev/gpu-particle-system/gmod_module/build/cmake_install.cmake",
+		"C:/Dev/gpu-particle-system/gmod_module/build/lib/minhook/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
